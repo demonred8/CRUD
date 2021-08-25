@@ -66,17 +66,21 @@ function createPizzaTable() {
                 tableRow.appendChild(td)
             }
             let buttonsContainer = document.createElement('td')
-            buttonsContainer.classList.add('cell')
+            let buttonsContainerClasses = buttonsContainer.classList
+            buttonsContainerClasses.add('cell')
+            buttonsContainerClasses.add('buttons')
 
             let buttonEdit = document.createElement('button')
             buttonEdit.type = 'button'
             buttonEdit.id = 'table_edit_element' + item.id
+            buttonEdit.className = 'table button'
             buttonEdit.textContent = 'Edit ID' + item.id
             buttonsContainer.appendChild(buttonEdit)
 
             let buttonRemove = document.createElement('button')
             buttonRemove.type = 'button'
             buttonRemove.id = 'table_remove_element' + item.id
+            buttonRemove.className = 'table button'
             buttonRemove.textContent = 'Remove ID' + item.id
             buttonsContainer.appendChild(buttonRemove)
 

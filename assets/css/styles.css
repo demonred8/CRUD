@@ -61,6 +61,14 @@
     background-color:white;
 }
 
+.cell.buttons {
+    width: 300px;
+}
+
+.table.button {
+    margin: 25px;
+}
+
 .close {
     font-size: 2rem;
     font-weight: bold;
