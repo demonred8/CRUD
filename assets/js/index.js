@@ -35,7 +35,7 @@ function createPizzaTable() {
 
         let tableRow = document.createElement('tr')
 
-        let thTitles = ['Id', 'Name', 'Weight', 'Size', 'Price', 'Edit']
+        let thTitles = ['Name', 'Weight', 'Size', 'Price', 'Edit']
 
         thTitles.forEach(item => {
             let th = document.createElement('th')
@@ -59,11 +59,12 @@ function createPizzaTable() {
             let tableRow = document.createElement('tr')
             tableRow.id = 'element_id' + item.id
             for (let value in item) {
-                let td = document.createElement('td')
-                td.classList.add('cell')
-                td.textContent = item[value]
-
-                tableRow.appendChild(td)
+                if (value !== 'id') {
+                    let td = document.createElement('td')
+                    td.classList.add('cell')
+                    td.textContent = item[value]
+                    tableRow.appendChild(td)
+                }
             }
             let buttonsContainer = document.createElement('td')
             buttonsContainer.className = 'cell buttons'
@@ -73,6 +74,7 @@ function createPizzaTable() {
             buttonEdit.id = 'editID' + item.id
             buttonEdit.className = 'table button'
             buttonEdit.textContent = 'Edit ID' + item.id
+            buttonEdit.addEventListener('click', editTableElement)
             buttonsContainer.appendChild(buttonEdit)
 
             let buttonRemove = document.createElement('button')
@@ -100,6 +102,12 @@ function createPizzaTable() {
 function removeTableElement(event) {
     let eventID = (event.target.id).replace(/\D/g, '')
     document.getElementById('element_id' + eventID).remove()
+}
+
+function editTableElement(event) {
+    let eventID = (event.target.id).replace(/\D/g, '')
+    document.getElementById('element_id' + eventID)
+    // TODO Functional for edit table element cell's
 }
 
 function createModalElement() {
