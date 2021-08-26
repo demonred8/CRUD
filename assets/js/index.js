@@ -221,17 +221,6 @@ function getPizzasFromServer() {
     return fetch(request)
         .then(response => response.json())
         .then(data => data)
-
-    // For test Things ;)
-
-    // let test = [{ "_id": "61266707dc46c203e8b3c7d0", "name": "test", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "6126670ddc46c203e8b3c7d1", "name": "test1", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "6126670fdc46c203e8b3c7d2", "name": "test2", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "61266711dc46c203e8b3c7d3", "name": "test3", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }]
-    // // return new Promise(test)
-    // return new Promise(resolve => {
-    //     setTimeout(() => { resolve() }, 1000)
-    // })
-    //     .then(() => {
-    //         return test
-    //     })
 }
 
 async function addPizzaToServer() {
@@ -291,7 +280,6 @@ async function updatePizzaOnServer(id) {
 }
 
 async function removePizzaFromServer(id) {
-    // TODO make PUT request for update pizza on the server
     let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza/' + id, {
         method: 'DELETE',
     }).catch(error => {
