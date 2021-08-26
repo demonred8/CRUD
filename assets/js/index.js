@@ -261,16 +261,16 @@ async function addPizzaToServer() {
     }
 }
 
-async function updatePizzaOnServer(eventID) {
+async function updatePizzaOnServer(id) {
     let getFromInputs = [
-        { value: document.getElementById('input_nameID' + eventID).value },
-        { value: document.getElementById('input_sizeID' + eventID).value },
-        { value: document.getElementById('input_weightID' + eventID).value },
-        { value: document.getElementById('input_priceID' + eventID).value },
-        { value: document.getElementById('input_ingridientsID' + eventID).value },
+        { value: document.getElementById('input_nameID' + id).value },
+        { value: document.getElementById('input_sizeID' + id).value },
+        { value: document.getElementById('input_weightID' + id).value },
+        { value: document.getElementById('input_priceID' + id).value },
+        { value: document.getElementById('input_ingridientsID' + id).value },
     ]
 
-    let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza/' + eventID, {
+    let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza/' + id, {
         headers: { "Content-Type": "application/json; charset=utf-8" },
         method: 'PUT',
         body: JSON.stringify({
