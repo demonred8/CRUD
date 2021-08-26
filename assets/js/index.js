@@ -24,9 +24,12 @@ function createTableButton() {
     root.appendChild(button)
 }
 
-function createPizzaTable() {
-    let pizzaTableExist = document.getElementById('pizza_table')
+async function createPizzaTable() {
+    let pizzaTableExist = document.getElementById('modal_table_container')
     if (!pizzaTableExist) {
+        // Creating div, which will be MODAL container for table
+        let modalContainer = createTableModalContainer('modal_table_container')
+
         let tableContainer = document.createElement('table')
         tableContainer.id = 'pizza_table'
 
@@ -35,7 +38,7 @@ function createPizzaTable() {
 
         let tableRow = document.createElement('tr')
 
-        let thTitles = ['Name', 'Weight', 'Size', 'Price', 'Edit']
+        let thTitles = ['Name', 'Size', 'Weight', 'Price', 'Ingridients', 'Edit']
 
         thTitles.forEach(item => {
             let th = document.createElement('th')
@@ -49,39 +52,37 @@ function createPizzaTable() {
         // Creating table Body here
         let tableBody = document.createElement('tbody')
 
-        let test = [
-            { id: 0, name: 'test1', weight: '200g', size: '30cm', price: '100uah' },
-            { id: 1, name: 'test2', weight: '400g', size: '35cm', price: '200uah' },
-            { id: 2, name: 'test3', weight: '600g', size: '40cm', price: '300uah' },
-        ]
-
-        test.forEach(item => {
+        let pizzasArray = await getPizzasFromServer()
+        console.log(pizzasArray)
+        pizzasArray.forEach(item => {
             let tableRow = document.createElement('tr')
-            tableRow.id = 'element_id' + item.id
+            tableRow.id = 'element_id' + item._id
             for (let value in item) {
-                if (value !== 'id') {
+                if (value !== '_id') {
                     let td = document.createElement('td')
+                    td.id = 'cell_' + value + 'ID' + item._id
                     td.classList.add('cell')
                     td.textContent = item[value]
                     tableRow.appendChild(td)
                 }
             }
             let buttonsContainer = document.createElement('td')
+            buttonsContainer.id = 'cell_buttonsID' + item._id
             buttonsContainer.className = 'cell buttons'
 
             let buttonEdit = document.createElement('button')
             buttonEdit.type = 'button'
-            buttonEdit.id = 'editID' + item.id
+            buttonEdit.id = 'editID' + item._id
             buttonEdit.className = 'table button'
-            buttonEdit.textContent = 'Edit ID' + item.id
+            buttonEdit.textContent = 'Edit'
             buttonEdit.addEventListener('click', editTableElement)
             buttonsContainer.appendChild(buttonEdit)
 
             let buttonRemove = document.createElement('button')
             buttonRemove.type = 'button'
-            buttonRemove.id = 'removeID' + item.id
+            buttonRemove.id = 'removeID' + item._id
             buttonRemove.className = 'table button'
-            buttonRemove.textContent = 'Remove ID' + item.id
+            buttonRemove.textContent = 'Remove'
             buttonRemove.addEventListener('click', removeTableElement)
             buttonsContainer.appendChild(buttonRemove)
 
@@ -90,24 +91,217 @@ function createPizzaTable() {
         })
 
         tableContainer.appendChild(tableBody)
+        modalContainer.appendChild(tableContainer)
 
         let root = document.getElementsByClassName('root')[0]
-        root.appendChild(tableContainer)
+        root.appendChild(modalContainer)
     }
     else {
         pizzaTableExist.classList.toggle('hidden')
     }
 }
 
-function removeTableElement(event) {
-    let eventID = (event.target.id).replace(/\D/g, '')
-    document.getElementById('element_id' + eventID).remove()
+function createTableModalContainer(id) {
+    let modalContainer = document.createElement('div')
+    modalContainer.id = id
+    let modalContainerClasses = modalContainer.classList
+    modalContainerClasses.add('modal')
+    modalContainerClasses.add('flex')
+    modalContainer.addEventListener('click', closeTableModalContainer)
+    return modalContainer
+}
+
+function closeTableModalContainer(event) {
+    let modal = document.getElementById('modal_table_container')
+
+    if (event.target == modal) {
+        modal.classList.toggle('hidden')
+    }
+}
+
+async function removeTableElement(event) {
+    let eventID = (event.target.id).replace(/^(removeID)/g, '')
+    let isRemovedFromServer = await removePizzaFromServer(eventID)
+    if (isRemovedFromServer) {
+        document.getElementById('element_id' + eventID).remove()
+    }
 }
 
 function editTableElement(event) {
-    let eventID = (event.target.id).replace(/\D/g, '')
-    document.getElementById('element_id' + eventID)
-    // TODO Functional for edit table element cell's
+    let eventID = (event.target.id).replace(/^(editID)/g, '')
+    let currentButtonsContainer = document.getElementById('cell_buttonsID' + eventID)
+
+    document.getElementById('editID' + eventID).classList.toggle('hidden')
+    document.getElementById('removeID' + eventID).classList.toggle('hidden')
+
+    let buttonApply = document.createElement('button')
+    buttonApply.type = 'button'
+    buttonApply.id = 'applyID' + eventID
+    buttonApply.className = 'table button'
+    buttonApply.textContent = 'Apply'
+    buttonApply.addEventListener('click', updateTableElement)
+
+    let buttonClose = document.createElement('button')
+    buttonClose.type = 'button'
+    buttonClose.id = 'closeID' + eventID
+    buttonClose.className = 'table button'
+    buttonClose.textContent = 'Close'
+    buttonClose.addEventListener('click', removeEditButtons)
+
+    let inputs = [
+        { id: 'input_nameID' + eventID, placeholder: 'Name', appendTo: 'cell_nameID' + eventID, basicValue: document.getElementById('cell_nameID' + eventID).textContent },
+        { id: 'input_sizeID' + eventID, placeholder: 'Size', appendTo: 'cell_sizeID' + eventID, basicValue: document.getElementById('cell_sizeID' + eventID).textContent },
+        { id: 'input_weightID' + eventID, placeholder: 'Weight', appendTo: 'cell_weightID' + eventID, basicValue: document.getElementById('cell_weightID' + eventID).textContent },
+        { id: 'input_priceID' + eventID, placeholder: 'Price', appendTo: 'cell_priceID' + eventID, basicValue: document.getElementById('cell_priceID' + eventID).textContent },
+        { id: 'input_ingridientsID' + eventID, placeholder: 'Ingridients', appendTo: 'cell_ingridientsID' + eventID, basicValue: document.getElementById('cell_ingridientsID' + eventID).textContent },
+    ]
+
+    inputs.forEach(item => {
+        let input = document.createElement('input')
+        input.id = item.id
+        input.setAttribute('placeholder', item.placeholder)
+        input.defaultValue = item.basicValue
+        document.getElementById(item.appendTo).appendChild(input)
+    })
+
+    currentButtonsContainer.appendChild(buttonApply)
+    currentButtonsContainer.appendChild(buttonClose)
+}
+
+function updateTableElement(event) {
+    let eventID = (event.target.id).replace(/^(applyID)/g, '')
+
+    let cellsToUpdate = [
+        { id: 'cell_nameID' + eventID, newValue: document.getElementById('input_nameID' + eventID).value },
+        { id: 'cell_sizeID' + eventID, newValue: document.getElementById('input_sizeID' + eventID).value },
+        { id: 'cell_weightID' + eventID, newValue: document.getElementById('input_weightID' + eventID).value },
+        { id: 'cell_priceID' + eventID, newValue: document.getElementById('input_priceID' + eventID).value },
+        { id: 'cell_ingridientsID' + eventID, newValue: document.getElementById('input_ingridientsID' + eventID).value },
+    ]
+
+    let isPizzaUpdated = updatePizzaOnServer(eventID)
+    if (isPizzaUpdated) {
+        cellsToUpdate.forEach(item => document.getElementById(item.id).textContent = item.newValue)
+        removeEditButtons(event)
+    }
+}
+
+function removeEditButtons(event) {
+    let eventID
+    if (event.target.id.match(/^(closeID)/g)) {
+        eventID = (event.target.id).replace(/^(closeID)/g, '')
+
+        let inputsToRemove = [
+            { id: 'input_nameID' + eventID },
+            { id: 'input_sizeID' + eventID },
+            { id: 'input_weightID' + eventID },
+            { id: 'input_priceID' + eventID },
+            { id: 'input_ingridientsID' + eventID },
+        ]
+
+        inputsToRemove.forEach(item => document.getElementById(item.id).remove())
+    }
+    if (event.target.id.match(/^(applyID)/g)) {
+        eventID = (event.target.id).replace(/^(applyID)/g, '')
+    }
+
+    document.getElementById('applyID' + eventID).remove()
+    document.getElementById('closeID' + eventID).remove()
+
+
+
+    document.getElementById('editID' + eventID).classList.toggle('hidden')
+    document.getElementById('removeID' + eventID).classList.toggle('hidden')
+}
+
+
+function getPizzasFromServer() {
+    const request = new Request('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza');
+
+    return fetch(request)
+        .then(response => response.json())
+        .then(data => data)
+
+    // For test Things ;)
+
+    // let test = [{ "_id": "61266707dc46c203e8b3c7d0", "name": "test", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "6126670ddc46c203e8b3c7d1", "name": "test1", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "6126670fdc46c203e8b3c7d2", "name": "test2", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }, { "_id": "61266711dc46c203e8b3c7d3", "name": "test3", "size": 25, "weight": 100, "price": 200, "ingridients": "lemon,apple,salt" }]
+    // // return new Promise(test)
+    // return new Promise(resolve => {
+    //     setTimeout(() => { resolve() }, 1000)
+    // })
+    //     .then(() => {
+    //         return test
+    //     })
+}
+
+async function addPizzaToServer() {
+    let pizzaName = document.getElementById('name').value
+    let pizzaWeight = document.getElementById('weight').value
+    let pizzaSize = document.getElementById('size').value
+    let pizzaPrice = document.getElementById('price').value
+    let pizzaIngridients = document.getElementById('ingridients').value
+
+    let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza', {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify({
+            name: pizzaName, size: pizzaSize,
+            weight: pizzaWeight,
+            price: pizzaPrice,
+            ingridients: pizzaIngridients
+        })
+    }).catch(error => {
+        alert('Error: Pizza not added', error)
+    })
+    if (rawResponse) {
+        alert('Pizza successfully added to the server!')
+        closeModalElement()
+    }
+}
+
+async function updatePizzaOnServer(eventID) {
+    let getFromInputs = [
+        { value: document.getElementById('input_nameID' + eventID).value },
+        { value: document.getElementById('input_sizeID' + eventID).value },
+        { value: document.getElementById('input_weightID' + eventID).value },
+        { value: document.getElementById('input_priceID' + eventID).value },
+        { value: document.getElementById('input_ingridientsID' + eventID).value },
+    ]
+
+    let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza/' + eventID, {
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        method: 'PUT',
+        body: JSON.stringify({
+            name: getFromInputs[0].value,
+            size: getFromInputs[1].value,
+            weight: getFromInputs[2].value,
+            price: getFromInputs[3].value,
+            ingridients: getFromInputs[4].value,
+        })
+    }).catch(error => {
+        alert('Pizza not updated!', error)
+        return false
+    })
+    if (rawResponse) {
+        alert('Pizza successfully updated on the server')
+        return true
+    }
+}
+
+async function removePizzaFromServer(id) {
+    // TODO make PUT request for update pizza on the server
+    let rawResponse = await fetch('https://crudcrud.com/api/5abf92a029df4f90bdb08b2b86e21df9/pizza/' + id, {
+        method: 'DELETE',
+    }).catch(error => {
+        alert('Pizza not removed!', error)
+        return false
+    })
+    if (rawResponse) {
+        alert('Pizza successfully removed from the server')
+        return true
+    }
 }
 
 function createModalElement() {
@@ -126,11 +320,11 @@ function createModalElement() {
         modalBody.classList.add('flex')
 
         let inputs = [
-            { inputId: 'name', placeholder: 'name' },
-            { inputId: 'weight', placeholder: 'weight' },
-            { inputId: 'size', placeholder: 'size' },
-            { inputId: 'ingredients', placeholder: 'ingredients' },
-            { inputId: 'price', placeholder: 'price' },
+            { inputId: 'name', placeholder: 'Name' },
+            { inputId: 'size', placeholder: 'Size' },
+            { inputId: 'weight', placeholder: 'Weight' },
+            { inputId: 'price', placeholder: 'Price' },
+            { inputId: 'ingridients', placeholder: 'Ingridients' },
         ]
 
         inputs.forEach(item => {
@@ -150,7 +344,7 @@ function createModalElement() {
         let buttonAdd = document.createElement('button')
         buttonAdd.id = 'modal_edit'
         buttonAdd.textContent = 'Add'
-        buttonAdd.addEventListener('click', addPizza)
+        buttonAdd.addEventListener('click', addPizzaToServer)
 
         modalFooter.appendChild(buttonAdd)
 
@@ -204,9 +398,4 @@ function createModalHeader(id, title) {
     modalHeader.appendChild(buttonClose)
 
     return modalHeader
-}
-
-function addPizza() {
-    //do something and close modal_container
-    closeModalElement()
 }
